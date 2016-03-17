@@ -74,6 +74,7 @@ function client (rootUrl, refreshUrl) {
         return request(refreshUrl)
                .then(function withNewSession (sessionId) {
                  currentSession = sessionId;
+                 requestCount +=1;
                  return request({
                    url: host + '/' + nodeId,
                    transform: function (body, res) {
