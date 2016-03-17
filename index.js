@@ -55,9 +55,12 @@ var requestCount = 0;
 // client :: (String, String) -> (String) -> Promise(Object)
 function client (rootUrl, refreshUrl) {
   var currentSession;
+  var currentSessionCount = 0;
   return function fetchAThing (id) {
+    
     function makeHttpRequest (host, nodeId, sessionId) {
       requestCount += 1;
+      currentSessionCount += 1;
       return request({
         url: host + '/' + nodeId,
         transform: function (body, res) {
@@ -69,28 +72,36 @@ function client (rootUrl, refreshUrl) {
           session: sessionId
         }
       })
-      .catch(function refreshSession () {
-        requestCount +=1;
-        return request(refreshUrl)
-               .then(function withNewSession (sessionId) {
-                 currentSession = sessionId;
-                 requestCount +=1;
-                 return request({
-                   url: host + '/' + nodeId,
-                   transform: function (body, res) {
-                     if (/json/i.test(res.headers['content-type'])) {
-                       return JSON.parse(body);
-                     } else return body;
-                   },
-                   headers: {
-                     session: currentSession
-                   }
-                 });
-               });
-      });
+      .catch(err => refreshSession(host, nodeId));
     }
 
-    return makeHttpRequest(rootUrl, id, currentSession);
+    function refreshSession (host, nodeId) {
+      requestCount += 1;
+      return request(refreshUrl)
+             .then(function withNewSession (sessionId) {
+               currentSession = sessionId;
+               requestCount +=1;
+               currentSessionCount += 1;
+               return request({
+                 url: host + '/' + nodeId,
+                 transform: function (body, res) {
+                   if (/json/i.test(res.headers['content-type'])) {
+                     return JSON.parse(body);
+                   } else return body;
+                 },
+                 headers: {
+                   session: currentSession
+                 }
+               });
+             });
+    }
+
+    if (!currentSession || currentSessionCount > 9) {
+      currentSessionCount = 0;
+      return refreshSession(rootUrl, id);
+    } else {
+      return makeHttpRequest(rootUrl, id, currentSession);
+    }
   };
 }
 
