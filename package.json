@@ -1,0 +1,17 @@
+{
+  "name": "sc-challenge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "coroutine-challenge.js",
+  "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "start": "node --harmony index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.3.4",
+    "request-promise": "^2.0.1"
+  }
+}
